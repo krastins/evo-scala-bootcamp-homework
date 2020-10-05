@@ -17,6 +17,11 @@ scalaVersion := "2.13.3"
 name := "evo-scala-bootcamp-homework"
 version := "1.0"
 
+val catsScalacheckVersion = "0.2.0"
+libraryDependencies += "io.chrisdavenport" %% "cats-scalacheck" % catsScalacheckVersion % Test
+libraryDependencies += "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test
+
+
 libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.0"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test"
