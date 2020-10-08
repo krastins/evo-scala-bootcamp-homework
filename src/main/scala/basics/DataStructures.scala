@@ -41,5 +41,6 @@ object DataStructures {
     map.groupBy({ case (_, value) => value })
       .toList
       .map({ case (key, value) => (value.keySet, key) })
+      .sortBy({ case (_, value) => value })
   }
 }
