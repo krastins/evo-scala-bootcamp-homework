@@ -25,10 +25,16 @@ object ErrorHandling extends App {
     }
   }
 
-  case class PaymentCard(name: String,
-                         cardNumber: String,
+
+  final case class Name(value: String) extends AnyVal
+  final case class CardNumber(value: String) extends AnyVal
+  final case class SecurityCode(value: String) extends AnyVal
+
+
+  case class PaymentCard(name: Name,
+                         cardNumber: CardNumber,
                          expirationDate: LocalDate,
-                         securityCode: String)
+                         securityCode: SecurityCode)
 
   sealed trait ValidationError
   object ValidationError {
@@ -81,8 +87,8 @@ object ErrorHandling extends App {
         if (!name.isEmpty) name.validNec
         else EmptyName.invalidNec
 
-      def validateNameAlphabetic(name: String): AllErrorsOr[String] =
-        if (name.matches("^[a-zA-Z ]+$")) name.validNec
+      def validateNameAlphabetic(name: String): AllErrorsOr[Name] =
+        if (name.matches("^[a-zA-Z ]+$")) Name(name).validNec
         else NonAlphabeticName.invalidNec
 
       def validateCardNumberIsNumeric(cardNumber: String): AllErrorsOr[String] =
@@ -93,8 +99,8 @@ object ErrorHandling extends App {
         if (cardNumber.length == 16) cardNumber.validNec
         else CardNumberLength.invalidNec
 
-      def validateChecksum(number: String): AllErrorsOr[String] =
-        if (checksum(number.map(_.asDigit)) == 0) number.validNec
+      def validateChecksum(number: String): AllErrorsOr[CardNumber] =
+        if (checksum(number.map(_.asDigit)) == 0) CardNumber(number).validNec
         else CardNumberInvalidChecksum.invalidNec
 
       // assuming the most common format of “MM/YY”
@@ -111,7 +117,7 @@ object ErrorHandling extends App {
       }
 
       // cards are valid through the end of the month and until the end of the last day of the month
-      def validateNotExpired(date: LocalDate, reference: LocalDate): AllErrorsOr[LocalDate] =
+      def validateNotExpired(reference: LocalDate)(date: LocalDate): AllErrorsOr[LocalDate] =
         if (date == reference || date.isAfter(reference)) date.validNec
         else CardExpired.invalidNec
 
@@ -119,21 +125,36 @@ object ErrorHandling extends App {
         if (code.toIntOption.isDefined) code.validNec
         else SecurityCodeIsNotNumeric.invalidNec
 
-      def validateSecurityCodeLength(code: String): AllErrorsOr[String] = {
+      def validateSecurityCodeLength(code: String): AllErrorsOr[SecurityCode] = {
         // assuming not an AmEx card with 4 digit security code, since we have no way of distinguishing the issuer
-        if (code.length === 3) code.validNec
+        if (code.length === 3) SecurityCode(code).validNec
         else SecurityCodeLength.invalidNec
       }
 
-      (validateNameNotEmpty(name).andThen(name => validateNameAlphabetic(name)),
+      def validateName(name: String): AllErrorsOr[Name] = {
+        validateNameNotEmpty(name).andThen(validateNameAlphabetic)
+      }
+
+      def validateCardNumber(number: String): AllErrorsOr[CardNumber] = {
         validateCardNumberIsNumeric(number)
-          .andThen(number => validateCardNumberLength(number))
-          .andThen(number => validateChecksum(number)),
+        .productR(validateCardNumberLength(number))
+        .andThen(validateChecksum)
+      }
+
+      def validateExpirationDate(expirationDate: String): AllErrorsOr[LocalDate] = {
         validateDateFormat(expirationDate)
-          .andThen(date => validateDate(date))
-          .andThen(date => validateNotExpired(date, todaysDate)),
-        validateSecurityCodeIsNumeric(securityCode)
-          .andThen(code => validateSecurityCodeLength(code)))
+        .productR(validateDate(expirationDate))
+        .andThen(validateNotExpired(todaysDate))
+      }
+
+      def validateSecurityCode(securityCode: String): AllErrorsOr[SecurityCode] = {
+        validateSecurityCodeIsNumeric(securityCode).andThen(validateSecurityCodeLength)
+      }
+
+      (validateName(name),
+        validateCardNumber(number),
+        validateExpirationDate(expirationDate),
+        validateSecurityCode(securityCode))
         .mapN(PaymentCard)
     }
   }

@@ -15,10 +15,11 @@ class ErrorHandlingSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenP
   "validator" should "return valid credit card" in {
     val now = LocalDate.of(2020, 10, 19)
     val res = validate("Foo Bar", "4242424242424242", "12/20", "123", now)
-    res shouldBe PaymentCard("Foo Bar",
-      "4242424242424242",
+    res shouldBe PaymentCard(
+      Name("Foo Bar"),
+      CardNumber("4242424242424242"),
       LocalDate.of(2020, 12, 31),
-      "123")
+      SecurityCode("123"))
       .validNec
   }
 
@@ -26,9 +27,10 @@ class ErrorHandlingSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenP
     val now = LocalDate.of(2020, 10, 19)
     val res = validate("Foo Bar", "4242424242424242", "10/20", "123", now)
     res shouldBe PaymentCard(
-      "Foo Bar",
-      "4242424242424242",
-      LocalDate.of(2020, 10, 31), "123")
+      Name("Foo Bar"),
+      CardNumber("4242424242424242"),
+      LocalDate.of(2020, 10, 31),
+      SecurityCode("123"))
       .validNec
   }
 
