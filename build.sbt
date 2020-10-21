@@ -1,6 +1,10 @@
 
 // The simplest possible sbt build file is just one line:
-
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-Ymacro-annotations"
+)
 
 scalaVersion := "2.13.3"
 // That is, to create a valid sbt build, all you've got to do is define the
@@ -18,13 +22,20 @@ name := "evo-scala-bootcamp-homework"
 version := "1.0"
 
 val catsScalacheckVersion = "0.2.0"
-libraryDependencies += "io.chrisdavenport" %% "cats-scalacheck" % catsScalacheckVersion % Test
-libraryDependencies += "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test
-
-
-libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
-libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.0"
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test"
-
 val catsVersion = "2.2.0"
-libraryDependencies += "org.typelevel" %% "cats-core" % catsVersion
+val circeVersion = "0.13.0"
+
+libraryDependencies ++= Seq(
+  "io.chrisdavenport" %% "cats-scalacheck" % catsScalacheckVersion % Test,
+  "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test,
+  "org.scalaj" %% "scalaj-http" % "2.4.2" % Test,
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
+  "org.scalactic" %% "scalactic" % "3.2.0",
+  "org.scalatest" %% "scalatest" % "3.2.0" % "test",
+  "io.circe" %% "circe-core" % circeVersion,
+  "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-generic-extras" % circeVersion,
+  "io.circe" %% "circe-optics" % circeVersion,
+  "io.circe" %% "circe-parser" % circeVersion,
+  "org.typelevel" %% "cats-core" % catsVersion
+)
