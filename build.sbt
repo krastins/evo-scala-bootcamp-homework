@@ -23,6 +23,7 @@ version := "1.0"
 
 val catsScalacheckVersion = "0.2.0"
 val catsVersion = "2.2.0"
+val catsEffectVersion = "2.2.0"
 val circeVersion = "0.13.0"
 
 libraryDependencies ++= Seq(
@@ -37,5 +38,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic-extras" % circeVersion,
   "io.circe" %% "circe-optics" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
-  "org.typelevel" %% "cats-core" % catsVersion
+  "org.typelevel" %% "cats-core" % catsVersion,
+  "org.typelevel" %% "cats-effect" % catsEffectVersion,
+  "com.codecommit" %% "cats-effect-testing-scalatest" % "0.4.1" % Test
 )
