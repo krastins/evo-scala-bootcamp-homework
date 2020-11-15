@@ -5,20 +5,21 @@ import java.io.ByteArrayOutputStream
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-// tests should pass against the cats IO impl, you can check this by inverting the comments in the following 2 lines
-import effects.EffectsHomework1.IO
+
+// Tests should pass against the cats IO impl
+// you can adjust which implementation the tests run against by (un)commenting these imports:
+
+import effects.EffectsHomework2.IO
+//import effects.EffectsHomework1.IO
 //import cats.effect.IO
 
 
 class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
   val errorMsg = "oops"
   val npe = new NullPointerException(errorMsg)
-
 
   "map and flatMap" should "run the console example without premature side effects" in {
     val name: String = "Dog"
@@ -42,15 +43,48 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     }
   }
 
+  "pure" should "return a pure value" in {
+    IO.pure("foo").unsafeRunSync() shouldBe "foo"
+  }
+
+  "delay" should "return a pure value" in {
+    IO.delay("foo").unsafeRunSync() shouldBe "foo"
+  }
+
+  it should "have no premature side effects" in {
+    val out = new ByteArrayOutputStream()
+
+    Console.withOut(out) {
+      val io = IO.delay({print("foo")})
+      out.toString shouldBe("")
+      io.unsafeRunSync()
+      out.toString shouldBe("foo")
+    }
+  }
+
+  "map" should "map one function to another" in {
+    IO.pure("1").map((s: String) => s.toInt).unsafeRunSync() shouldBe 1
+  }
+
+  it should "have no premature side effects" in {
+    val out = new ByteArrayOutputStream()
+
+    Console.withOut(out) {
+      val io = IO.pure("1").map(i => {print(i); i}).map(print(_))
+      out.toString shouldBe("")
+      io.unsafeRunSync()
+      out.toString shouldBe("11")
+    }
+  }
   "*>" should "not compute if the first io doesn't succeed" in {
     assertThrows[NullPointerException](IO.raiseError(new NullPointerException()).*>(IO("that")).unsafeRunSync())
   }
 
-  "*>" should "replace the result with given value" in {
+  it should "replace the result with given value" in {
     IO.pure("this").*>(IO("that")).unsafeRunSync() shouldBe "that"
   }
 
-  "*>" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).*>(IO("that"))
@@ -64,11 +98,11 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     assertThrows[NullPointerException](IO.raiseError(new NullPointerException()).as("that").unsafeRunSync())
   }
 
-  "as" should "replace the result with given value" in {
+  it should "replace the result with given value" in {
     IO.pure("this").as("that").unsafeRunSync() shouldBe "that"
   }
 
-  "as" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).as("that")
@@ -82,7 +116,7 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.pure("this").void.unsafeRunSync() shouldBe ()
   }
 
-  "void" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).void
@@ -96,11 +130,11 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.pure("yay").attempt.unsafeRunSync shouldBe Right("yay")
   }
 
-  "attempt" should "return exception in a Left" in {
+  it should "return exception in a Left" in {
     IO.raiseError(npe).attempt.unsafeRunSync shouldBe Left(npe)
   }
 
-  "attempt" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).attempt
@@ -114,11 +148,11 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.pure("yay").option.unsafeRunSync shouldBe Some("yay")
   }
 
-  "option" should "return none in case of a failure" in {
+  it should "return none in case of a failure" in {
     IO.raiseError(npe).option.unsafeRunSync shouldBe None
   }
 
-  "option" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).option
@@ -133,7 +167,7 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.raiseError(npe).handleErrorWith(_ => IO("NPE")).unsafeRunSync() shouldBe "NPE"
   }
 
-  "handleErrorWith" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).handleErrorWith(_ => IO.unit)
@@ -143,12 +177,15 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     }
   }
 
-  "redeem" should "handle errors" in {
+  "redeem" should "handle the right successful path" in {
     IO.pure(1).redeem(_.getMessage, _.toString).unsafeRunSync() shouldBe "1"
+  }
+
+  it should "handle errors" in {
     IO.raiseError(npe).redeem(_.getMessage, Integer.toString).unsafeRunSync() shouldBe errorMsg
   }
 
-  "redeem" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).redeem(_.getMessage, _.toString)
@@ -166,7 +203,7 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.raiseError(npe).redeemWith(recoverMsg, bindToString).unsafeRunSync() shouldBe errorMsg
   }
 
-  "redeemWith" should "have no premature side effects" in {
+  it should "have no premature side effects" in {
     val out = new ByteArrayOutputStream()
     Console.withOut(out) {
       val io = IO(print("sidefx")).redeemWith(_ => IO.unit, _ => IO.unit)
@@ -190,7 +227,7 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     }
   }
 
-  "unsafeToFuture" should "handle errors" in {
+  it should "handle errors" in {
     implicit val ec: ExecutionContext = ExecutionContext.global
     val io: Future[String] = IO.raiseError(npe).unsafeToFuture()
     io.onComplete {
@@ -217,7 +254,7 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.fromEither(Right("foo")).unsafeRunSync() shouldBe "foo"
   }
 
-  "fromEither" should "handle left values" in {
+  it should "handle left values" in {
     assertThrows[NullPointerException](IO.fromEither(Left(npe)).unsafeRunSync())
   }
 
@@ -225,7 +262,7 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.fromOption(Some("foo"))(npe).unsafeRunSync() shouldBe "foo"
   }
 
-  "fromOption" should "handle none" in {
+  it should "handle none" in {
     assertThrows[NullPointerException](IO.fromOption(None)(npe).unsafeRunSync())
   }
 
@@ -237,7 +274,7 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
     IO.fromTry(Try("foo")).unsafeRunSync() shouldBe "foo"
   }
 
-  "fromTry" should "handle exceptions" in {
+  it should "handle exceptions" in {
     assertThrows[NullPointerException](IO.fromTry(throw npe).unsafeRunSync())
   }
 
