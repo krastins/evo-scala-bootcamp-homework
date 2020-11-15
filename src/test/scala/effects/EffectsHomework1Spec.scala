@@ -76,6 +76,21 @@ class EffectsHomework1Spec extends AnyFlatSpec with Matchers {
       out.toString shouldBe("11")
     }
   }
+
+  "flatMap" should "not blow stack" in {
+    // borrowed from cats IO source comments
+    def fib(n: Int, a: Long = 0, b: Long = 1): IO[Long] =
+      IO(a + b).flatMap { b2 =>
+        if (n > 0)
+          fib(n - 1, b, b2)
+        else
+          IO.pure(a)
+      }
+    // EffectsHomeWork1.IO should fail here (but it sometimes passes unless this test is run isolated individually)
+    // cats.effect.IO and EffectsHomeWork2.IO should pass as they're stack safe
+    fib(5000).unsafeRunSync() shouldBe 535601498209671957L
+  }
+
   "*>" should "not compute if the first io doesn't succeed" in {
     assertThrows[NullPointerException](IO.raiseError(new NullPointerException()).*>(IO("that")).unsafeRunSync())
   }
