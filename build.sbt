@@ -25,6 +25,8 @@ val catsScalacheckVersion = "0.2.0"
 val catsVersion = "2.2.0"
 val catsEffectVersion = "2.2.0"
 val circeVersion = "0.13.0"
+val http4sVersion = "0.21.7"
+
 
 libraryDependencies ++= Seq(
   "io.chrisdavenport" %% "cats-scalacheck" % catsScalacheckVersion % Test,
@@ -40,5 +42,10 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-parser" % circeVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
   "org.typelevel" %% "cats-effect" % catsEffectVersion,
-  "com.codecommit" %% "cats-effect-testing-scalatest" % "0.4.1" % Test
+  "com.codecommit" %% "cats-effect-testing-scalatest" % "0.4.1" % Test,
+  "org.http4s" %% "http4s-dsl" % http4sVersion,
+  "org.http4s" %% "http4s-blaze-server" % http4sVersion,
+  "org.http4s" %% "http4s-blaze-client" % http4sVersion,
+  "org.http4s" %% "http4s-circe" % http4sVersion,
+  "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
 )
